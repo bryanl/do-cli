@@ -15,9 +15,13 @@ func DropletCreate(name string, c *Config) error {
 		Image:  c.Defaults.Image,
 	}
 
-	_, _, err := client.Droplet.Create(createRequest)
+	droplet, _, err := client.Droplet.Create(createRequest)
+	if err != nil {
+		return err
+	}
 
-	return err
+	fmt.Println(droplet.Droplet.ID)
+	return nil
 }
 
 func DropletList(c *Config) error {
@@ -27,7 +31,6 @@ func DropletList(c *Config) error {
 		return err
 	}
 
-	// (ip: 107.170.118.88, status: active, region: 4, id: 1400861)
 	for _, d := range droplets {
 		fmt.Printf(
 			"%s (ip: %s, status: %s, region: %s, id: %d)\n",
@@ -41,4 +44,10 @@ func DropletList(c *Config) error {
 	}
 
 	return nil
+}
+
+func DropletDelete(id int, c *Config) error {
+	client := c.Client()
+	_, err := client.Droplet.Delete(id)
+	return err
 }

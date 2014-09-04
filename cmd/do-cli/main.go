@@ -1,10 +1,12 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"os"
 	"os/user"
 	"path"
+	"strconv"
 
 	"github.com/bryanl/do-cli"
 	"github.com/codegangsta/cli"
@@ -29,13 +31,18 @@ func main() {
 			Subcommands: []cli.Command{
 				{
 					Name:   "create",
-					Usage:  "create a new droplet",
+					Usage:  "create a new droplet given a name",
 					Action: ActionDropletCreate,
 				},
 				{
 					Name:   "list",
 					Usage:  "list droplets",
 					Action: ActionDropletList,
+				},
+				{
+					Name:   "delete",
+					Usage:  "deletes a droplet by id",
+					Action: ActionDropletDelete,
 				},
 			},
 		},
@@ -62,46 +69,65 @@ func ActionInit(c *cli.Context) {
 	i.CreateConfig(c.Args()[0], f)
 }
 
+func actionErr(msg string) {
+	log.Println(msg)
+	os.Exit(1)
+}
+
 // ActionDropletCreate is the droplet create handler
 func ActionDropletCreate(c *cli.Context) {
 	name := c.Args()[0]
-	config, err := loadConfig()
+	config := loadConfig()
+	err := docli.DropletCreate(name, config)
 	if err != nil {
-		log.Printf("couldn't load config: %s", err)
-	}
-	err = docli.DropletCreate(name, config)
-	if err != nil {
-		log.Printf("couldn't create droplet: %s", err)
+		actionErr(fmt.Sprintf("couldn't create droplet: %s", err))
 	}
 }
 
 func ActionDropletList(c *cli.Context) {
-	config, err := loadConfig()
+	config := loadConfig()
+	err := docli.DropletList(config)
 	if err != nil {
-		log.Printf("couldn't load config: %s", err)
-	}
-	err = docli.DropletList(config)
-	if err != nil {
-		log.Printf("couldn't list droplets: %s", err)
+		actionErr(fmt.Sprintf("couldn't list droplets: %s", err))
 	}
 }
 
-func loadConfig() (*docli.Config, error) {
+func ActionDropletDelete(c *cli.Context) {
+	config := loadConfig()
+	if !c.Args().Present() {
+		cli.ShowSubcommandHelp(c)
+		return
+	}
+	id, err := strconv.Atoi(c.Args()[0])
+	if err != nil {
+		actionErr(fmt.Sprintf("couldn't delete droplet: %s", err))
+	}
+
+	err = docli.DropletDelete(id, config)
+	if err != nil {
+		fmt.Printf("couldn't delete: %s", err)
+		return
+	}
+
+	fmt.Println("deleted", id)
+}
+
+func loadConfig() *docli.Config {
 	p, err := configFile()
 	if err != nil {
-		return nil, err
+		actionErr(fmt.Sprintf("couldn't load config", err))
 	}
 	f, err := os.Open(p)
 	if err != nil {
-		return nil, err
+		actionErr(fmt.Sprintf("couldn't load config", err))
 	}
 
 	config, err := docli.ConfigLoad(f)
 	if err != nil {
-		return nil, err
+		actionErr(fmt.Sprintf("couldn't load config", err))
 	}
 
-	return config, nil
+	return config
 }
 
 func configFile() (string, error) {
