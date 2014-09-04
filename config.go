@@ -10,6 +10,15 @@ type Config struct {
 	Auth struct {
 		Token string
 	}
+
+	Defaults struct {
+		Region            string
+		Image             string
+		Size              string
+		SSHKey            string
+		PrivateNetworking bool
+		BackupsEnabled    bool
+	}
 }
 
 func ConfigLoad(r io.Reader) (*Config, error) {
