@@ -1,9 +1,10 @@
 package docli
 
 import (
+	"encoding/json"
 	"fmt"
 
-	"github.com/digitaloceancloud/godo"
+	"gopkg.in/digitaloceancloud/godo.v0"
 )
 
 func DropletCreate(name string, c *Config) error {
@@ -20,7 +21,8 @@ func DropletCreate(name string, c *Config) error {
 		return err
 	}
 
-	fmt.Println(droplet.Droplet.ID)
+	b, _ := json.MarshalIndent(droplet, "", "    ")
+	fmt.Println(string(b))
 	return nil
 }
 

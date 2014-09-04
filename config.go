@@ -5,7 +5,7 @@ import (
 	"io"
 
 	"code.google.com/p/goauth2/oauth"
-	"github.com/digitaloceancloud/godo"
+	"gopkg.in/digitaloceancloud/godo.v0"
 )
 
 // Config holds configuration directives
