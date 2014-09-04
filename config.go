@@ -24,6 +24,10 @@ func ConfigLoad(r io.Reader) (*Config, error) {
 }
 
 func (c *Config) Save(w io.Writer) error {
-	encoder := json.NewEncoder(w)
-	return encoder.Encode(c)
+	b, err := json.MarshalIndent(c, "", "    ")
+	if err != nil {
+		return err
+	}
+	_, err = w.Write(b)
+	return err
 }
