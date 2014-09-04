@@ -3,6 +3,9 @@ package docli
 import (
 	"encoding/json"
 	"io"
+
+	"code.google.com/p/goauth2/oauth"
+	"github.com/digitaloceancloud/godo"
 )
 
 // Config holds configuration directives
@@ -39,4 +42,12 @@ func (c *Config) Save(w io.Writer) error {
 	}
 	_, err = w.Write(b)
 	return err
+}
+
+func (c *Config) Client() *godo.Client {
+	t := &oauth.Transport{
+		Token: &oauth.Token{AccessToken: c.Auth.Token},
+	}
+
+	return godo.NewClient(t.Client())
 }
