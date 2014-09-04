@@ -32,6 +32,11 @@ func main() {
 					Usage:  "create a new droplet",
 					Action: ActionDropletCreate,
 				},
+				{
+					Name:   "list",
+					Usage:  "list droplets",
+					Action: ActionDropletList,
+				},
 			},
 		},
 	}
@@ -59,28 +64,44 @@ func ActionInit(c *cli.Context) {
 
 // ActionDropletCreate is the droplet create handler
 func ActionDropletCreate(c *cli.Context) {
-	p, err := configFile()
-	if err != nil {
-		log.Printf("can't create config file: %s", err)
-		return
-	}
-	f, err := os.Open(p)
-	if err != nil {
-		log.Printf("can't open config file: %s", err)
-		return
-	}
-
 	name := c.Args()[0]
-	config, err := docli.ConfigLoad(f)
+	config, err := loadConfig()
 	if err != nil {
-		log.Printf("can't read config: %s", err)
-		return
+		log.Printf("couldn't load config: %s", err)
 	}
-
 	err = docli.DropletCreate(name, config)
 	if err != nil {
 		log.Printf("couldn't create droplet: %s", err)
 	}
+}
+
+func ActionDropletList(c *cli.Context) {
+	config, err := loadConfig()
+	if err != nil {
+		log.Printf("couldn't load config: %s", err)
+	}
+	err = docli.DropletList(config)
+	if err != nil {
+		log.Printf("couldn't list droplets: %s", err)
+	}
+}
+
+func loadConfig() (*docli.Config, error) {
+	p, err := configFile()
+	if err != nil {
+		return nil, err
+	}
+	f, err := os.Open(p)
+	if err != nil {
+		return nil, err
+	}
+
+	config, err := docli.ConfigLoad(f)
+	if err != nil {
+		return nil, err
+	}
+
+	return config, nil
 }
 
 func configFile() (string, error) {

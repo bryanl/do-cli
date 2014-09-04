@@ -21,3 +21,8 @@ Create a droplet
 ```sh
 do-cli droplets create <name>
 ```
+
+List droplets
+```sh
+do-cli droplets list
+```
