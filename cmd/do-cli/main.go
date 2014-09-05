@@ -12,6 +12,34 @@ import (
 	"github.com/codegangsta/cli"
 )
 
+var (
+	dropletCommands = []cli.Command{
+		{
+			Name:   "create",
+			Usage:  "create a new droplet given a name",
+			Action: ActionDropletCreate,
+		},
+		{
+			Name:   "list",
+			Usage:  "list droplets",
+			Action: ActionDropletList,
+		},
+		{
+			Name:   "delete",
+			Usage:  "deletes a droplet by id",
+			Action: ActionDropletDelete,
+		},
+	}
+
+	keyCommands = []cli.Command{
+		{
+			Name:   "list",
+			Usage:  "list keys",
+			Action: ActionKeyList,
+		},
+	}
+)
+
 func main() {
 	app := cli.NewApp()
 	app.Name = "do-cli"
@@ -25,26 +53,16 @@ func main() {
 			Action:    ActionInit,
 		},
 		{
-			Name:      "droplets",
-			ShortName: "d",
-			Usage:     "manage droplets",
-			Subcommands: []cli.Command{
-				{
-					Name:   "create",
-					Usage:  "create a new droplet given a name",
-					Action: ActionDropletCreate,
-				},
-				{
-					Name:   "list",
-					Usage:  "list droplets",
-					Action: ActionDropletList,
-				},
-				{
-					Name:   "delete",
-					Usage:  "deletes a droplet by id",
-					Action: ActionDropletDelete,
-				},
-			},
+			Name:        "droplets",
+			ShortName:   "d",
+			Usage:       "manage droplets",
+			Subcommands: dropletCommands,
+		},
+		{
+			Name:        "keys",
+			ShortName:   "k",
+			Usage:       "manage keys",
+			Subcommands: keyCommands,
 		},
 	}
 
@@ -69,9 +87,11 @@ func ActionInit(c *cli.Context) {
 	i.CreateConfig(c.Args()[0], f)
 }
 
-func actionErr(msg string) {
-	log.Println(msg)
-	os.Exit(1)
+func checkError(msg string, err error) {
+	if err != nil {
+		fmt.Printf("%s: %s", msg, err)
+		os.Exit(1)
+	}
 }
 
 // ActionDropletCreate is the droplet create handler
@@ -79,17 +99,13 @@ func ActionDropletCreate(c *cli.Context) {
 	name := c.Args()[0]
 	config := loadConfig()
 	err := docli.DropletCreate(name, config)
-	if err != nil {
-		actionErr(fmt.Sprintf("couldn't create droplet: %s", err))
-	}
+	checkError("couldn't create droplet", err)
 }
 
 func ActionDropletList(c *cli.Context) {
 	config := loadConfig()
 	err := docli.DropletList(config)
-	if err != nil {
-		actionErr(fmt.Sprintf("couldn't list droplets: %s", err))
-	}
+	checkError("couldn't list droplets", err)
 }
 
 func ActionDropletDelete(c *cli.Context) {
@@ -99,33 +115,28 @@ func ActionDropletDelete(c *cli.Context) {
 		return
 	}
 	id, err := strconv.Atoi(c.Args()[0])
-	if err != nil {
-		actionErr(fmt.Sprintf("couldn't delete droplet: %s", err))
-	}
-
+	checkError("couldn't delete droplet", err)
 	err = docli.DropletDelete(id, config)
-	if err != nil {
-		fmt.Printf("couldn't delete: %s", err)
-		return
-	}
+	checkError("couldn't delete droplet", err)
 
 	fmt.Println("deleted", id)
 }
 
+func ActionKeyList(c *cli.Context) {
+	config := loadConfig()
+
+	err := docli.KeyList(config)
+	if err != nil {
+	}
+}
+
 func loadConfig() *docli.Config {
 	p, err := configFile()
-	if err != nil {
-		actionErr(fmt.Sprintf("couldn't load config", err))
-	}
+	checkError("couldn't load config", err)
 	f, err := os.Open(p)
-	if err != nil {
-		actionErr(fmt.Sprintf("couldn't load config", err))
-	}
-
+	checkError("couldn't load config", err)
 	config, err := docli.ConfigLoad(f)
-	if err != nil {
-		actionErr(fmt.Sprintf("couldn't load config", err))
-	}
+	checkError("couldn't load config", err)
 
 	return config
 }
@@ -140,7 +151,6 @@ func configFile() (string, error) {
 	return path.Join(homeDir, ".do-cli.json"), nil
 }
 
-// UserHomeDir returns the user's home directory
 func userHomeDir() (string, error) {
 	u, err := user.Current()
 	if err != nil {
