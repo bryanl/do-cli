@@ -4,8 +4,9 @@ import (
 	"encoding/json"
 	"io"
 
+	"github.com/digitaloceancloud/godo"
+
 	"code.google.com/p/goauth2/oauth"
-	"gopkg.in/digitaloceancloud/godo.v0"
 )
 
 // Config holds configuration directives

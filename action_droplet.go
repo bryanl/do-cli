@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"gopkg.in/digitaloceancloud/godo.v0"
+	"github.com/digitaloceancloud/godo"
 )
 
 func DropletCreate(name string, c *Config) error {
@@ -16,7 +16,7 @@ func DropletCreate(name string, c *Config) error {
 		Image:  c.Defaults.Image,
 	}
 
-	droplet, _, err := client.Droplet.Create(createRequest)
+	droplet, _, err := client.Droplets.Create(createRequest)
 	if err != nil {
 		return err
 	}
@@ -27,29 +27,42 @@ func DropletCreate(name string, c *Config) error {
 }
 
 func DropletList(c *Config) error {
+	list := []godo.Droplet{}
+
 	client := c.Client()
-	droplets, _, err := client.Droplet.List()
-	if err != nil {
-		return err
+
+	opt := &godo.ListOptions{}
+	for {
+		droplets, resp, err := client.Droplets.List(opt)
+
+		if err != nil {
+			return err
+		}
+
+		for _, d := range droplets {
+			list = append(list, d)
+		}
+
+		if resp.Links.IsLastPage() {
+			break
+		}
+
+		page, err := resp.Links.CurrentPage()
+		if err != nil {
+			return err
+		}
+
+		opt.Page = page + 1
 	}
 
-	for _, d := range droplets {
-		fmt.Printf(
-			"%s (ip: %s, status: %s, region: %s, id: %d)\n",
-			d.Name,
-			d.Networks.V4[0].IPAddress,
-			d.Status,
-			d.Region.Slug,
-			d.ID,
-		)
-
-	}
+	b, _ := json.MarshalIndent(list, "", "    ")
+	fmt.Println(string(b))
 
 	return nil
 }
 
 func DropletDelete(id int, c *Config) error {
 	client := c.Client()
-	_, err := client.Droplet.Delete(id)
+	_, err := client.Droplets.Delete(id)
 	return err
 }

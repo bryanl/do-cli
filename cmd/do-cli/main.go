@@ -13,6 +13,33 @@ import (
 )
 
 var (
+	commands = []cli.Command{
+		{
+			Name:      "init",
+			ShortName: "i",
+			Usage:     "initialize configuration",
+			Action:    ActionInit,
+		},
+		{
+			Name:        "droplets",
+			ShortName:   "d",
+			Usage:       "manage droplets",
+			Subcommands: dropletCommands,
+		},
+		{
+			Name:        "keys",
+			ShortName:   "k",
+			Usage:       "manage keys",
+			Subcommands: keyCommands,
+		},
+		{
+			Name:        "domains",
+			ShortName:   "do",
+			Usage:       "manage domains",
+			Subcommands: domainCommands,
+		},
+	}
+
 	dropletCommands = []cli.Command{
 		{
 			Name:   "create",
@@ -37,35 +64,42 @@ var (
 			Usage:  "list keys",
 			Action: ActionKeyList,
 		},
+		{
+			Name:   "delete",
+			Usage:  "deletes a key by id or fingerprint",
+			Action: ActionKeyDelete,
+		},
+	}
+
+	domainCommands = []cli.Command{
+		{
+			Name:   "list",
+			Usage:  "list domains",
+			Action: ActionDomainList,
+		},
+		{
+			Name:   "get",
+			Usage:  "get a domain by name",
+			Action: ActionDomainGet,
+		},
+		{
+			Name:   "create",
+			Usage:  "create a domain",
+			Action: ActionDomainCreate,
+		},
+		{
+			Name:   "delete",
+			Usage:  "delete a domain",
+			Action: ActionDomainDelete,
+		},
 	}
 )
 
 func main() {
 	app := cli.NewApp()
 	app.Name = "do-cli"
-	app.Usage = "Digital Ocean cli"
-
-	app.Commands = []cli.Command{
-		{
-			Name:      "init",
-			ShortName: "i",
-			Usage:     "initialize configuration",
-			Action:    ActionInit,
-		},
-		{
-			Name:        "droplets",
-			ShortName:   "d",
-			Usage:       "manage droplets",
-			Subcommands: dropletCommands,
-		},
-		{
-			Name:        "keys",
-			ShortName:   "k",
-			Usage:       "manage keys",
-			Subcommands: keyCommands,
-		},
-	}
-
+	app.Usage = "Digital Ocean CLI"
+	app.Commands = commands
 	app.Run(os.Args)
 }
 
@@ -128,6 +162,63 @@ func ActionKeyList(c *cli.Context) {
 	err := docli.KeyList(config)
 	if err != nil {
 	}
+}
+
+func ActionKeyDelete(c *cli.Context) {
+	config := loadConfig()
+	if !c.Args().Present() {
+		cli.ShowSubcommandHelp(c)
+		return
+	}
+
+	id := c.Args()[0]
+	err := docli.KeyDelete(id, config)
+	checkError("couldn't delete key", err)
+}
+
+func ActionDomainList(c *cli.Context) {
+	config := loadConfig()
+	err := docli.DomainList(config)
+	checkError("couldn'tlist domains", err)
+}
+
+func ActionDomainGet(c *cli.Context) {
+	config := loadConfig()
+	if !c.Args().Present() {
+		cli.ShowSubcommandHelp(c)
+		return
+	}
+
+	name := c.Args()[0]
+	err := docli.DomainGet(name, config)
+	checkError("couldn't fetch domain", err)
+}
+
+func ActionDomainCreate(c *cli.Context) {
+	config := loadConfig()
+	if len(c.Args()) != 2 {
+		cli.ShowSubcommandHelp(c)
+		return
+	}
+
+	name := c.Args()[0]
+	ip := c.Args()[1]
+
+	err := docli.DomainCreate(name, ip, config)
+	checkError("couldn't create domain", err)
+}
+
+func ActionDomainDelete(c *cli.Context) {
+	config := loadConfig()
+	if !c.Args().Present() {
+		cli.ShowSubcommandHelp(c)
+		return
+	}
+	name := c.Args()[0]
+	err := docli.DomainDelete(name, config)
+	checkError("couldn't delete domain", err)
+
+	fmt.Println("deleted", name)
 }
 
 func loadConfig() *docli.Config {
