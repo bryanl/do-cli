@@ -7,7 +7,27 @@ import (
 	"github.com/digitaloceancloud/godo"
 )
 
-func DropletCreate(name string, c *Config) error {
+type DropletCreateConfig struct {
+	Region            string
+	Image             string
+	Size              string
+	SSHKey            int
+	PrivateNetworking bool
+	BackupsEnabled    bool
+}
+
+func NewDropletCreateConfig(c *Config) *DropletCreateConfig {
+	return &DropletCreateConfig{
+		Region:            c.Defaults.Region,
+		Image:             c.Defaults.Image,
+		Size:              c.Defaults.Size,
+		SSHKey:            c.Defaults.SSHKey,
+		PrivateNetworking: c.Defaults.PrivateNetworking,
+		BackupsEnabled:    c.Defaults.BackupsEnabled,
+	}
+}
+
+func DropletCreate(name string, dcr *DropletCreateConfig, c *Config) error {
 	client := c.Client()
 	createRequest := &godo.DropletCreateRequest{
 		Name:   name,

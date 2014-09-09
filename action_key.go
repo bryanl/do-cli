@@ -13,7 +13,7 @@ func KeyList(c *Config) error {
 
 	client := c.Client()
 
-	opt := &godo.ListOptions{}
+	opt := &godo.ListOptions{PerPage: 75}
 	for {
 		keys, resp, err := client.Keys.List(opt)
 

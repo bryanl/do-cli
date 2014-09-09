@@ -19,7 +19,7 @@ type Config struct {
 		Region            string
 		Image             string
 		Size              string
-		SSHKey            string
+		SSHKey            int
 		PrivateNetworking bool
 		BackupsEnabled    bool
 	}
